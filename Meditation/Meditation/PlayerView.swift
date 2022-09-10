@@ -8,9 +8,16 @@
 import SwiftUI
 
 struct PlayerView: View {
+	@EnvironmentObject var audioManager: AudioManager
 	var meditationViewModel: MeditationViewModel
+	var isPreview: Bool = false
 	@State private var value: Double = 0.0
+	@State private var isEditing: Bool = false
 	@Environment(\.dismiss) var dismiss
+	
+	let timer = Timer
+		.publish(every: 0.5, on: .main, in: .common)
+		.autoconnect()
 	
     var body: some View {
 		ZStack {
@@ -31,6 +38,7 @@ struct PlayerView: View {
 			VStack(spacing: 32) {
 				HStack {
 					Button {
+						audioManager.stop()
 						dismiss()
 					} label: {
 						Image(systemName: "xmark.circle.fill")
@@ -49,58 +57,73 @@ struct PlayerView: View {
 				Spacer()
 				
 				// MARK: Playback
-				VStack(spacing: 5) {
-					Slider(value: $value, in: 0...60)
+				if let player = audioManager.player {
+					VStack(spacing: 5) {
+						Slider(value: $value, in: 0...player.duration) { editing in
+							isEditing = editing
+							if !editing {
+								player.currentTime = value
+							}
+						}
 						.tint(.white)
+						
+						// MARK: Playback time
+						HStack {
+							Text(DateComponentsFormatter.positional.string(from: player.currentTime) ?? "0:00")
+							
+							Spacer()
+							
+							Text(DateComponentsFormatter.positional.string(from: player.duration - player.currentTime) ?? "0:00")
+						}
+					}
 					
-					// MARK: Playback time
+					// MARK: Playback Control
 					HStack {
-						Text("0:00")
+						// MARK: Repeat Button
+						let color: Color = audioManager.isLooping ? .teal : .white
+						PlaybackControlButton(systemName: "repeat", color: color) {
+							audioManager.toggleLoop()
+						}
 						
 						Spacer()
 						
-						Text("1:00")
+						// MARK: Backward Button
+						PlaybackControlButton(systemName: "gobackward.10") {
+							player.currentTime -= 10
+						}
+						
+						Spacer()
+						
+						// MARK: Play/Pause Button
+						PlaybackControlButton(systemName: audioManager.isPlaying ? "pause.circle.fill" : "play.circle.fill", fontSize: 44) {
+							audioManager.playPause()
+						}
+						
+						Spacer()
+						
+						// MARK: Forward Button
+						PlaybackControlButton(systemName: "goforward.10") {
+							player.currentTime += 10
+						}
+						
+						Spacer()
+						
+						// MARK: Stop Button
+						PlaybackControlButton(systemName: "stop.fill") {
+							audioManager.stop()
+							dismiss()
+						}
 					}
 				}
-				
-				// MARK: Playback Control
-				HStack {
-					// MARK: Repeat Button
-					PlaybackControlButton(systemName: "repeat") {
-						
-					}
-					
-					Spacer()
-					
-					// MARK: Backward Button
-					PlaybackControlButton(systemName: "gobackward.10") {
-						
-					}
-					
-					Spacer()
-					
-					// MARK: Play/Pause Button
-					PlaybackControlButton(systemName: "play.circle.fill", fontSize: 44) {
-						
-					}
-					
-					Spacer()
-					
-					// MARK: Forward Button
-					PlaybackControlButton(systemName: "goforward.10") {
-						
-					}
-					
-					Spacer()
-					
-					// MARK: Stop Button
-					PlaybackControlButton(systemName: "stop.fill") {
-						
-					}
-				}
-				
 			}
 			.padding(20)
+		}
+		.onAppear {
+			audioManager.startPlayer(track: meditationViewModel.meditation.track, isPreview: isPreview)
+		}
+		.onReceive(timer) { _ in
+			guard let player = audioManager.player, !isEditing else { return }
+			value = player.currentTime
 		}
     }
 }
@@ -108,6 +131,7 @@ struct PlayerView: View {
 struct PlayerView_Previews: PreviewProvider {
 	static let meditationViewModel = MeditationViewModel(meditation: Meditation.data)
     static var previews: some View {
-		PlayerView(meditationViewModel: meditationViewModel)
+		PlayerView(meditationViewModel: meditationViewModel, isPreview: true)
+			.environmentObject(AudioManager())
     }
 }
