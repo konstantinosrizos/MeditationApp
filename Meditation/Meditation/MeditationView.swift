@@ -16,28 +16,42 @@ struct MeditationView: View {
 			// MARK: Image
 			Image(meditationViewModel.meditation.image)
 				.resizable()
-				.scaledToFit()
-				.frame(height: UIScreen.main.bounds.height / 3)
+				.scaledToFill()
+				.frame(height: UIScreen.main.bounds.height / 2)
 			
 			// MARK: Meditations details
 			ZStack {
 				// MARK: Background
 				Color(red: 24/255, green: 23/255, blue: 22/255)
+					.cornerRadius(20)
 				
 				VStack(alignment: .leading, spacing: 24) {
 					
-					VStack(alignment: .leading, spacing: 8) {
-						Text("Music")
+					HStack {
+						VStack(alignment: .leading, spacing: 8) {
+							Text("Music")
+							
+							Text(DateComponentsFormatter.abbreviated.string(from: meditationViewModel.meditation.duration) ?? meditationViewModel.meditation.duration.formatted() + "s")
+						}
+						.font(.subheadline)
+						.opacity(0.7)
 						
-						Text(DateComponentsFormatter.abbreviated.string(from: meditationViewModel.meditation.duration) ?? meditationViewModel.meditation.duration.formatted() + "s")
+						Spacer()
+						
+						Image(meditationViewModel.meditation.icon)
+							.resizable()
+							.foregroundColor(.gray)
+							.frame(width: 40, height: 40)
 					}
-					.font(.subheadline)
-					.textCase(.uppercase)
-					.opacity(0.7)
 					
 					// MARK: Title
 					Text(meditationViewModel.meditation.title)
 						.font(.title)
+					
+					// MARK: Description
+					Text(meditationViewModel.meditation.description)
+					
+					Spacer()
 					
 					// MARK: Play Button
 					Button {
@@ -51,10 +65,6 @@ struct MeditationView: View {
 							.background(.white)
 							.cornerRadius(20)
 					}
-
-					
-					// MARK: Description
-					Text(meditationViewModel.meditation.description)
 					
 					Spacer()
 				}

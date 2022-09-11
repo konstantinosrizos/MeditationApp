@@ -11,14 +11,12 @@ import AVKit
 final class AudioManager: ObservableObject {
 	
 	var player: AVAudioPlayer?
-	@Published private(set) var isPlaying: Bool = false {
-		didSet {
-			print("isPlaying", isPlaying)
-		}
-	}
+	
+	@Published private(set) var isPlaying: Bool = false
+	
 	@Published private(set) var isLooping: Bool = false
 	
-	func startPlayer(track: String, isPreview: Bool = false) {
+	func startPlayer(track: String, isPreview: Bool) {
 		guard let url = Bundle.main.url(forResource: track, withExtension: "mp3") else {
 			print("Resource not found: \(track)")
 			return
